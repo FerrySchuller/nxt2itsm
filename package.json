@@ -2,6 +2,16 @@
   "name": "nxt2itsm",
   "version": "1.0.1",
   "description": "Displays Nexthink scores in HTML for integration with ITSM tooling",
+   "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ariejoosse/nxt2itsm"
+  },
+  "author": {
+    "name": "ariej",
+    "email": "ariejoosse@yahoo.com",
+    "url": "https://github.com/ariejoosse/nxt2itsm"
+},
+  "homepage": "https://github.com/ariejoosse/nxt2itsm#readme",
   "dependencies": {
     "async": "^2.6.1",
     "express": "^4.16.3",
