@@ -1,0 +1,11 @@
+{
+  "name": "nxt2itsm",
+  "version": "1.0.1",
+  "description": "Displays Nexthink scores in HTML for integration with ITSM tooling",
+  "dependencies": {
+    "async": "^2.6.1",
+    "express": "^4.16.3",
+    "libxmljs": "^0.19.0",
+    "request": "^2.87.0"
+  }
+}

@@ -1,0 +1,104 @@
+
+body {
+    background-color: #bbbbbb;
+	font-family: Arial;
+	width: 900px;
+}
+.scorepane {
+	width: 460px;
+	float: left;
+}
+
+.actpane {
+	width: 440px;
+	float: left;
+}
+
+.composite {
+	color:DimGrey;
+	font-size: 14pt;
+	text-align: right;
+}
+.leaf {
+	text-align:right;
+}
+
+.green {
+	background-color: #99ffbb;
+}
+
+.red {
+	background-color:#ff9999;
+}
+ .yellow {
+	background-color:#ffff99;
+ }
+ 
+ .line{
+	width: 440px;
+	height: 25px;
+	float: left;
+	font-size: 9pt;
+ }
+.cell {
+	width: 200px;
+	height: 25px;
+	float: left;
+	margin-left: 20px;
+	margin-top: 2px;
+	line-height: 25px;
+}
+.clear {
+	clear: both;
+}
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #555;
+    color: #fff;
+    /* text-align: center;*/
+	text-align: left;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute; 
+    z-index: 1;
+    /*bottom: 125%;*/
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+	padding: 5px 5px;
+}
+
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}	
+
+.acttext {
+	 padding-left: 25px;
+}
+.acttext:hover .acttooltip {
+	visibility:visible;
+	opacity: 1;
+}
+.acttooltip {
+	visibility: hidden;
+	color: #fff;
+	background-color: #555;
+	position: absolute; 
+    z-index: 1;
+    left: 45%;
+	width: 200px;
+    opacity: 0;
+    transition: opacity 0.3s;
+	text-align: left;
+    border-radius: 6px;
+    padding: 5px 5px;
+}

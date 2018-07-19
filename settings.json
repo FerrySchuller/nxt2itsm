@@ -1,0 +1,17 @@
+{"engineOptions":{
+		"agentOptions": {"rejectUnauthorized" : false},
+		"auth": {
+		"user": "admin",
+		"pass": "admin"}
+	},
+"engines": ["192.168.5.30", "192.168.5.5"],
+"portal": "192.168.5.30",
+"portalOptions":{
+		"auth": {
+		"user": "admin",
+		"pass": "admin"}
+	},
+"APIport": "1671",
+"ActEnabled": true
+}
+  

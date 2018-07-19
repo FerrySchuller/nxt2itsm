@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScoreDef xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" UID="12366429-7ae5-4c43-895b-c5eeb118ea31" SyntaxVersion="1" DataModelVersion="12" Object="device" Name="L1 Checklist" Status="enabled" InObjectView="true">
+  <Platforms>
+    <Platform>windows</Platform>
+  </Platforms>
+  <ScopeQuery>
+    <Filtering>      
+            (where device 
+            (ne device_type (enum server)))
+                </Filtering>
+  </ScopeQuery>
+  <ComputationSchedule>
+    <Every>1h</Every>
+  </ComputationSchedule>
+  <Thresholds>
+    <Threshold Color="red">
+      <Keyword From="0" Label="Kritiek" />
+    </Threshold>
+    <Threshold Color="yellow">
+      <Keyword From="6" Label="Matig" />
+    </Threshold>
+    <Threshold Color="green">
+      <Keyword From="10" Label="Keigoed" />
+    </Threshold>
+  </Thresholds>
+  <CompositeScore UID="12303112-8277-4b26-bbfa-b6c2904f9971" Name="L1 device checklist" Description="Indicates the overall device score." Visibility="visible" Weight="1">
+    <Operation>
+      <Average />
+    </Operation>
+    <CompositeScore UID="12303119-8277-4b26-bbfa-b6c2904f9971" Name="Hardware checklist" Description="Indicates the overall hardware score." Visibility="visible" Weight="1">
+      <Operation>
+        <WeightedAverage />
+      </Operation>
+      <LeafScore UID="12362f8c-6288-4689-9e5d-1103385c27fa" Name="Disk status" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: schedule for disk replacement with ServiceNow (Custom Action). &#xD;&#xA; • 5. &#xD;&#xA;     ➔ Action: clear recycle bin (Remote Action). &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required. &#xD;&#xA; • &quot; - &quot;. &#xD;&#xA;     ➔ Action: investigate disk performance (One-Click). &#xD;&#xA;          a. If anomalies present, escalate to L2 hardware team with ServiceNow (Custom Action). " Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="system_drive_free_space" />
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range>
+              <From Value="1" Score="0" />
+            </Range>
+            <Range Label="100%">
+              <From Value="5368709120" Score="10" />
+            </Range>
+            <Range>
+              <From Value="21474836480" Score="10" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="12316590-4792-47ff-b651-14a66ebe1d4c" Name="Vrije ruimte systeem disk" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: schedule for disk replacement with ServiceNow (Custom Action). &#xD;&#xA; • 5. &#xD;&#xA;     ➔ Action: escalate to L2 hardware team with ServiceNow (Custom Action). &#xD;&#xA; • 10.&#xD;&#xA;     ➔ No action required. &#xD;&#xA; • &quot;-&quot;. &#xD;&#xA;     ➔ Action: escalate to L2 hardware team with ServiceNow (Custom Action). " Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="system_drive_free_space" />
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range>
+              <From Value="1" Score="0" />
+            </Range>
+            <Range>
+              <From Value="5368709120" Score="8" />
+            </Range>
+            <Range>
+              <From Value="21474836480" Score="10" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="12301bc0-0f5f-42e2-8e72-1b3739338aef" Name="Processor belasting" Description="Bij score van &#xD;&#xA;• 0. ➔ Actie: escalatie level 2.&#xD;&#xA;• 5. ➔ Actie: Escalatie level 2.&#xD;&#xA; • 10.➔ Geen actie nodig." Visibility="visible" Weight="1">
+        <Input>
+          <Computation Name="High device overall cpu time ratio last 7 days" Description="" UID="12322cf7-9bec-4514-852b-20378dfc877d">
+            <Query Output="high_device_overall_cpu_time_ratio" DefaultOutputValue="0">
+                    (select (id)
+                    (from device
+                    (with device_warning
+                    (between now-7d now)
+                    (compute high_device_overall_cpu_time_ratio))))
+                        </Query>
+          </Computation>
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range>
+              <From Value="0.00" Score="10" />
+            </Range>
+            <Range>
+              <From Value="0.05" Score="8" />
+            </Range>
+            <Range>
+              <From Value="0.10" Score="5" />
+            </Range>
+            <Range>
+              <From Value="0.20" Score="2" />
+            </Range>
+            <Range>
+              <From Value="0.50" Score="0" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="12345c0e-c48e-4016-9dcc-4c3b88caaa00" Name="Geheugen belasting" Description="If Score is:&#xD;&#xA; • 0, 2 or 5. &#xD;&#xA;     ➔ Action: schedule for memory upgrade with ServiceNow (Custom Action). &#xD;&#xA; • 8 or 10. &#xD;&#xA;     ➔ No action required. &#xD;&#xA; • &quot;-&quot;. &#xD;&#xA;     ➔ Action: escalate to L2 hardware team with ServiceNow (Custom Action). " Visibility="visible" Weight="1">
+        <Input>
+          <Computation Name="Cumulated warning duration for high memory usage last 7 days" Description="" UID="1231a92f-b8bc-412f-8024-083382814df8">
+            <Query Output="high_device_memory_time_ratio" DefaultOutputValue="0">
+                    (select (id)
+                    (from device
+                    (with device_warning
+                    (between now-7d now)
+                    (compute high_device_memory_time_ratio))))
+                        </Query>
+          </Computation>
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range>
+              <From Value="0.00" Score="10" />
+            </Range>
+            <Range>
+              <From Value="0.05" Score="8" />
+            </Range>
+            <Range>
+              <From Value="0.10" Score="5" />
+            </Range>
+            <Range>
+              <From Value="0.20" Score="2" />
+            </Range>
+            <Range>
+              <From Value="0.50" Score="0" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+    </CompositeScore>
+    <CompositeScore UID="123d2304-9ee9-4e9e-aad6-33607f6327c9" Name="Software checklist" Description="Indicates the overall software score." Visibility="visible" Weight="1">
+      <Operation>
+        <Average />
+      </Operation>
+      <LeafScore UID="123c794a-647c-4ec7-98f7-3cab10938e84" Name="Voorgeschreven Besturingssysteem" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: escalate to L2 software team with ServiceNow (Custom Action). &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="#OS compliance" />
+        </Input>
+        <Normalization>
+          <Enums>
+            <Enum Label="yes" Value="Windows compliant OS" Score="10" />
+            <Enum Label="no" Value="No" Score="0" />
+          </Enums>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="123fb97b-19e6-4da7-a8a1-fe0d82d978e8" Name="Besturingssysteem updates" Description="If Score is:&#xD;&#xA; • 0, 3 or 5. &#xD;&#xA;     ➔ Action: enable Windows Update (Remote Action).&#xD;&#xA; • 7 or 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="#OS compliance" />
+        </Input>
+        <Normalization>
+          <Enums>
+            <Enum Label="in the past week" Value="Windows compliant OS" Score="10" />
+            <Enum Label="no" Value="No" Score="0" />
+          </Enums>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="123f326b-6bb9-40c1-aa43-cec8ad78ca5e" Name="Voorgeschreven browser" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Actions:&#xD;&#xA;          1. investigate non-corporate browsers (One-Click)&#xD;&#xA;&#xD;&#xA;          2. investigate with user reason for non-corporate browser&#xD;&#xA;&#xD;&#xA;          3. if appropriate:&#xD;&#xA;               a. schedule uninstallation of non-corporate browser with SCCM (Custom Action)&#xD;&#xA;               b. schedule installation of corporate browser with SCCM (Custom Action). &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Computation Name="Corporate browser" Description="" UID="123c3969-cd35-4ff1-bb02-e3df6c9fc5d0">
+            <Query Output="number_of_executions" DefaultOutputValue="0"> 
+							(select (id)
+							(from device
+							(with execution
+							(where binary (ne #"Compliance" (enum "corporate browser")))
+							(where executable (eq #"Type" (enum "web browsers")))
+            				(compute number_of_executions)
+							(between now-7d now))))
+                        </Query>
+          </Computation>
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range Label="only corporate browser used">
+              <From Value="0" Score="10" />
+            </Range>
+            <Range Label="non-corporate browser used">
+              <From Value="1" Score="0" />
+            </Range>
+          </Ranges>
+        </Normalization>
+        <Document>
+          <Header>If a non-corporate browser is detected on the device, the score is equal to 0.
+          Otherwise, the score is 10.
+ 
+          The use of a non-corporate browser can impact the productivity of the user and could also put the company at risk. Currently, the only officially supported browsers are IE11 and Chrome. Follow these steps to fix any issues:</Header>
+          <Sections>
+            <Section>
+              <Title>Useful tools and KB</Title>
+              <HTTP href="https://docs.microsoft.com/en-us/internet-explorer/ie11-deploy-guide/install-problems-with-ie11">Known issues when upgrading from IE10 to IE11: KB-1452</HTTP>
+              <HTTP href="https://docs.microsoft.com/en-us/internet-explorer/ie11-deploy-guide/install-problems-with-ie11">FAQ about corporate browsers: KB-9867</HTTP>
+            </Section>
+            <Section>
+              <Title>Step 1: make sure IE is the default browser</Title>
+              <RemoteAction UID="076a44e5-7745-40ad-b457-f93832c0fdae" Name="Set IE as default browser"/>
+            </Section>
+            <Section>
+              <Title>Step 2: make sure that the browser is working fine</Title>
+              <RemoteAction UID="5a54fd79-0e47-4b91-bca8-669187456aed" Name = "Clear cookies and temp files of IE"/>
+              <RemoteAction UID="1f23fc4a-9bf8-4608-b2a4-da2193a211d0" Name = "Reset default settings of IE"/>
+            </Section>
+          </Sections>
+        </Document>
+      </LeafScore>
+      <LeafScore UID="123f327b-6bb9-40c2-aa43-cec8ad78ca5e" Name="SCCM geinstalleerd" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: install SCCM agent (Remote Action).  &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Computation Name="SCCM agent status" Description="" UID="123c3979-cd35-4ff1-bb02-e3df6c9fc5d0">
+            <Query Output="number_of_packages" DefaultOutputValue="0"> 
+                        (select (id)
+                          (from device
+                            (with package
+                              (where package (eq program (pattern "Configuration Manager Client")))
+                              (compute number_of_packages))))
+                        </Query>
+          </Computation>
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range Label="not installed">
+              <From Value="0" Score="10" />
+            </Range>
+            <Range Label="installed">
+              <From Value="1" Score="10" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="123f329b-6cc9-40c1-aa43-cec8ad78ca5e" Name="Days since last reboot" Description="If Score is:&#xD;&#xA; • 0 or 5.&#xD;&#xA;     ➔ Action: schedule reboot of device with SCCM (Custom Action).   &#xD;&#xA; • 10.&#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="number_of_days_since_last_boot" />
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range Label="1">
+              <From Value="0" Score="10" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+    </CompositeScore>
+    <CompositeScore UID="823e5704-9ee9-4e9e-aad6-33607f6327c9" Name="Office checklist" Description="Indicates the overall Microsoft Office score." Visibility="visible" Weight="1">
+      <Operation>
+        <Average />
+      </Operation>
+      <LeafScore UID="123f327b-6bb9-40c1-aa43-cec8ad78ca5e" Name="O365 install status" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: schedule installation of O365 with SCCM (Custom Action). &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Computation Name="O365 install status" Description="" UID="123c3979-cd35-4ff1-bb02-e3df6c9fc5d0">
+            <Query Output="number_of_packages" DefaultOutputValue="0"> 
+							(select (id)
+                (from device
+                    (with package
+                        (where package (eq name (pattern "Microsoft Office*")))
+                        (compute number_of_packages))))
+                        </Query>
+          </Computation>
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range Label="not installed">
+              <From Value="0" Score="0" />
+            </Range>
+            <Range Label="installed">
+              <From Value="1" Score="10" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="351f329b-6cc9-40c1-aa43-cec8ad78ca5e" Name="Outlook connectivity" Description="If Score is:&#xD;&#xA; • 0 or 5.&#xD;&#xA;     ➔ Action: escalate to L2 network team with ServiceNow (Custom Action).   &#xD;&#xA; • 8.&#xD;&#xA;     ➔ Action: reset device proxy settings (Remote Action).   &#xD;&#xA; • 10.&#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="number_of_days_since_last_boot" />
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range Label="good">
+              <From Value="0" Score="10" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="809f329b-6cc9-40c1-aa43-cec8ad78ca5e" Name="Outlook application stability" Description="If Score is:&#xD;&#xA; • 0 or 5.&#xD;&#xA;     ➔ Action: escalate to L2 software team with ServiceNow (Custom Action).   &#xD;&#xA; • 8.&#xD;&#xA;     ➔ Action: reset PST file (Remote Action).   &#xD;&#xA; • 10.&#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="number_of_days_since_last_boot" />
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range Label="poor">
+              <From Value="0" Score="5" />
+            </Range>
+          </Ranges>
+        </Normalization>
+        <Document>
+          <Header>Crashes can be caused by multiple issues. Try the following remote actions to resolve the issue:
+          </Header>
+          <Sections>
+            <Section>
+              <Title>Remediations</Title>
+              <RemoteAction UID="9e0f4dc3-5526-45bd-b390-bbb0b4a27222" Name= "Kill Outlook process"/>
+              <RemoteAction UID="697a25bb-a641-432f-b257-8856574f5023" Name= "Reset OST file"/>
+              <RemoteAction UID="10de785b-0884-43b5-9879-d1724f66db6e" Name= "Trigger GPO update"/>
+            </Section>
+            <Section>
+              <Description>If no crashes are detected on the device, the score 10.
+                Otherwise:
+                1 crash ➔ 8
+                2 crashes ➔ 5
+                3 or 4 crashes ➔ 2
+                5 or more crashes ➔ 0
+              </Description>
+            </Section>
+          </Sections>
+        </Document>
+      </LeafScore>
+    </CompositeScore>
+    <CompositeScore UID="123d2304-9ee9-4e9e-aad6-33607f6327c8" Name="Security checklist" Description="Indicates the overall security score." Visibility="visible" Weight="1">
+      <Operation>
+        <Average />
+      </Operation>
+      <LeafScore UID="123e1988-ce91-4034-b20d-c6094a42eacf" Name="Corporate antivirus" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: schedule installation of corporate antivirus with SCCM (Custom Action). &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="#Corporate AV" />
+        </Input>
+        <Normalization>
+          <Enums>
+            <Enum Label="yes" Value="Yes" Score="10" />
+            <Enum Label="no" Value="No" Score="10" />
+          </Enums>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="12351d22-f060-413c-b2cc-bdc1da0b393c" Name="Antivirus RTP" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: escalate to L2 security team with ServiceNow (Custom Action). &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="antivirus_rtp" />
+        </Input>
+        <Normalization>
+          <Enums>
+            <Enum Value="on" Score="10" />
+            <Enum Value="off" Score="0" />
+            <Enum Value="unknown" Score="0" />
+            <Enum Value="N/A" Score="0" />
+            <Enum Value="-" Score="0" />
+          </Enums>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="12315054-876c-4ec8-aeb8-58d50b1ae00d" Name="Antivirus up-to-date" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: escalate to L2 security team with ServiceNow (Custom Action). &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="antivirus_up_to_date" />
+        </Input>
+        <Normalization>
+          <Enums>
+            <Enum Value="yes" Score="10" />
+            <Enum Value="no" Score="0" />
+            <Enum Value="unknown" Score="0" />
+            <Enum Value="N/A" Score="0" />
+            <Enum Value="-" Score="0" />
+          </Enums>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="123b5ffb-eb10-4c94-b8b9-288b9c833ef9" Name="Corporate firewall" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: schedule installation of corporate firewall with SCCM (Custom Action). &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="#Corporate FW" />
+        </Input>
+        <Normalization>
+          <Enums>
+            <Enum Label="yes" Value="Yes" Score="10" />
+            <Enum Label="no" Value="No" Score="10" />
+          </Enums>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="1235036e-b4c1-488f-832b-ec5e861126a4" Name="Firewall RTP" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: escalate to L2 security team with ServiceNow (Custom Action). &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Field Name="firewall_rtp" />
+        </Input>
+        <Normalization>
+          <Enums>
+            <Enum Value="on" Score="10" />
+            <Enum Value="off" Score="10" />
+            <Enum Value="unknown" Score="10" />
+            <Enum Value="N/A" Score="10" />
+            <Enum Value="-" Score="10" />
+          </Enums>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="123e326b-6bb9-40d4-ad43-cec8ad78ca5e" Name="Dangerous binary executions" Description="If Score is:&#xD;&#xA; • 0. &#xD;&#xA;     ➔ Action: schedule antivirus scan (Custom Action). &#xD;&#xA; • 10. &#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Computation Name="Dangerous binaries" Description="" UID="1234df69-cd25-4ff1-bb02-e3df6c9fc5d0">
+            <Query Output="number_of_executions" DefaultOutputValue="0"> 
+							(select (id)
+                (from (device) 
+                    (with execution
+                    (where binary 
+                            (eq threat_level (enum "high")))
+                    (where binary
+                            (eq threat_level (enum "intermediate")))
+            		(where binary
+                            (eq #"Threat level" (enum "high")))
+                    (compute number_of_executions)
+                    (between now-7d now)))
+                        </Query>
+          </Computation>
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range Label="no dangerous binaries executed">
+              <From Value="0" Score="10" />
+            </Range>
+            <Range Label="dangerous binaries executed">
+              <From Value="1" Score="0" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+      <Document>
+        <Header>Ensure all basic compliance and security settings are properly set</Header>
+        <Sections>
+          <Section>
+            <Title>Incident response</Title>
+            <RemoteAction UID="2bd2021f-80aa-471a-8c13-bb759a056e87" />
+            <RemoteAction UID="bb9d2000-d2ea-4d3c-b46a-8a4d35844e39" />
+          </Section>
+        </Sections>
+      </Document>
+    </CompositeScore>
+    <CompositeScore UID="123a228c-a817-433d-bec7-13d79f8dd953" Name="Infrastructure checklist" Description="Indicates the overall infrastructure score." Visibility="visible" Weight="1">
+      <Operation>
+        <WeightedAverage />
+      </Operation>
+      <LeafScore UID="12350cab-5959-4927-9156-9157c3aef2a5" Name="Network connectivity" Description="If Score is:&#xD;&#xA; • 0 or 5.&#xD;&#xA;     ➔ Action: escalate to L2 network team with ServiceNow (Custom Action).   &#xD;&#xA; • 10.&#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Computation Name="Successful connections ratio last 7 days" Description="" UID="1239b5d9-b5f7-4219-b731-6a106efe3f96">
+            <Query Output="successful_connections_ratio" DefaultOutputValue="NULL">
+                      (select (id)
+                      (from device
+                      (with connection
+                      (compute successful_connections_ratio)
+                      (between now-7d now))))  
+                        </Query>
+          </Computation>
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range>
+              <From Value="0" Score="0" />
+            </Range>
+            <Range>
+              <From Value="0.9" Score="8" />
+            </Range>
+            <Range>
+              <From Value="0.98" Score="10" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+      <LeafScore UID="123eb35e-5edd-4355-905d-fa5a2856acd0" Name="Network response time" Description="If Score is:&#xD;&#xA; • 0, 2 or 5.&#xD;&#xA;     ➔ Action: escalate to L2 network team with ServiceNow (Custom Action).   &#xD;&#xA; • 8 or 10.&#xD;&#xA;     ➔ No action required." Visibility="visible" Weight="1">
+        <Input>
+          <Computation Name="Response time last 7 days" Description="" UID="123da232-8565-4691-b607-12ddce6d6170">
+            <Query Output="average_network_response_time" DefaultOutputValue="NULL">
+                      (select (id)
+                      (from device
+                      (with connection
+                      (compute average_network_response_time)
+                      (between now-7d now))))  
+                        </Query>
+          </Computation>
+        </Input>
+        <Normalization>
+          <Ranges>
+            <Range>
+              <From Value="0" Score="10" />
+            </Range>
+            <Range>
+              <From Value="10000" Score="8" />
+            </Range>
+            <Range>
+              <From Value="25000" Score="8" />
+            </Range>
+            <Range>
+              <From Value="50000" Score="2" />
+            </Range>
+            <Range>
+              <From Value="100000" Score="0" />
+            </Range>
+          </Ranges>
+        </Normalization>
+      </LeafScore>
+    </CompositeScore>
+    <Document>
+      <Header>Proactively ensuring that devices meet the requirements of the L1 checklist can help to reduce the number of incidents, which will in turn reduce the workload on the L1 support team.
+Click on problem scores to discover the recommended actions.</Header>
+      <Sections>
+        <Section>
+          <Title>Generieke acties</Title>
+          <Description>Deze acties kunnen mogelijk de problemen onmiddellijk verhelpen:</Description>
+          <RemoteAction UID="0b9819f2-791a-483c-a0ae-9265e818d760" Name= "Schedule antivirus scan"/>
+          <RemoteAction UID="26fca01b-cf6e-44ca-be87-8cbdeff3d366" Name= "Trigger reboot"/>
+          <RemoteAction UID="38cbf002-7b3d-4272-8e58-79eced416f1a" Name= "Cleanup disk"/>
+          <RemoteAction UID="763549c1-b251-416a-95b7-cb73fec07b95" Name= "Log off current user"/>
+          <RemoteAction UID="07c6d170-6c9e-4f1d-9559-dc3b52cd95cd" Name= "Test connectivity on the network"/>
+        </Section>
+        <Section>
+          <Title>Haal specifieke info op</Title>
+          <Description>Deze acties kunnen behulpzaam zijn in support kwesties</Description>
+          <RemoteAction UID="22d59acb-14de-4f3b-bea1-6266b0130179" Name= "Get BIOS version and date" />
+          <RemoteAction UID="80ba4f9c-0a0d-4b4f-a759-58dce28d3507" Name= "Get Powershell execution policy"/>
+          <RemoteAction UID="2cd348e0-7d40-458d-b9b9-7f4ad8dfbfde" Name= "Get IP config"/>
+        </Section>
+        <Section>
+          <Title>Meer informatie</Title>
+          <Description>Deze links kunnen nuttig zijn:</Description>
+          <HTTP href="http://blog.nexthink.com">Onze knowledge base</HTTP>
+        </Section>
+      </Sections>
+    </Document>
+  </CompositeScore>
+</ScoreDef>
