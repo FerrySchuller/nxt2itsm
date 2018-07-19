@@ -2,8 +2,8 @@ const request = require('request');
 const async = require('async');
 const fs = require('fs');
 
-var filePath = '/var/nxtIntegrations/clientList.json';
-var settings = JSON.parse(fs.readFileSync('/var/nxtIntegrations/settings.json'));
+var filePath = __dirname +'/clientList.json';
+var settings = JSON.parse(fs.readFileSync(__dirname + '/settings.json'), {encoding: 'utf-8'});
 var options = settings.engineOptions;
 var nxtquery = 'query?platform=windows&query=select name (from device)&format=json';
 var clientArray = {};
