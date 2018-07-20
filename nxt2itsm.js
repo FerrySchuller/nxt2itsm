@@ -45,6 +45,7 @@ fs.readFile(xmlfilePath, {encoding: 'utf-8'}, function(err,data){
 				Object.assign(score, {'description': leafscores[leafindex].attr('Description').value().replace(/(\r\n|\n|\r)/gm,'<br>')});
 				Object.assign(score, {'name': leafscores[leafindex].attr('Name').value()});
 				scores.push(score);
+				// next line on purpose not good
 				selectstring += '#"score:' + scorename + "/" + leafscores[leafindex].attr('Name').value() + '" '
 			}
 		}
@@ -116,34 +117,40 @@ app.get('/device/:deviceId', function(req,res) {
 				res.write("</head>");
 				res.write("<body>");
 				res.write("<div class='scorepane'>");
-				var output = JSON.parse(body);
-				//console.log(JSON.stringify(output, null,2));
-				for (scoreindex in scores){
-					var outtext;
-					if (scores[scoreindex].type === "Composite"){
-						res.write("<div class='composite cell'>" + scores[scoreindex].name + '</div><div class="clear"></div>');
-					}
-					else {
-						scorestring = "score:" + scorename+ "/" + scores[scoreindex].name; 
-						var scoreresult = calcColor(output[0][scorestring]);
-						res.write("<div class= 'line' ><div class='leaf cell'> " + scores[scoreindex].name + '</div><div class = "tooltip cell ' + scoreresult.Color + '">' + scoreresult.Label + ': ' + output[0][scorestring] + '<span class="tooltiptext">' + scores[scoreindex].description + '</span></div></div><div class="clear"></div>');
-					}
-				}
-				res.write("</div>");
-				if (settings.ActEnabled){
-					res.write("<div class='actpane'>");
-					for (section in actSections){
-						res.write("<div class='cell actSectionHeader'>" + actSections[section].title + "<span class='acttooltip'>" + actSections[section].description + "</span></div><div class='clear'></div>");
-						for (actionIndex in actSections[section].remoteAction){
-							//res.write("<div class='line'><div class='cell'><img src='/images/settings.png' height='20px' width='20px'style='float:left'><div class='acttext'>" + actSections[section].remoteAction[action].name + "<span class='acttooltip'>Sommige problemen verdwijnen als je hier op klikt</span></div></div></div><div class='clear'></div>");
-							res.write("<div class='line'><div class='cell'><img src='/images/settings.png' height='20px' width='20px'style='float:left' onclick=submitActrequest('" + output[0]['device_uid'] + "','" + actSections[section].remoteAction[actionIndex].UID + "')><div class='acttext'>" + actSections[section].remoteAction[actionIndex].name + "</div></div></div><div class='clear'></div>");
+				try {
+					var output = JSON.parse(body);
+					//console.log(JSON.stringify(output, null,2));
+					for (scoreindex in scores){
+						var outtext;
+						if (scores[scoreindex].type === "Composite"){
+							res.write("<div class='composite cell'>" + scores[scoreindex].name + '</div><div class="clear"></div>');
 						}
-						for (httpIndex in actSections[section].http){
-							res.write("<div class='line'><div class='cell'><img src='/images/settings.png' height='20px' width='20px'style='float:left'><div class='acttext'><a href='" + actSections[section].http[httpIndex].url + "' target='_blank'>" + actSections[section].http[httpIndex].text + "</a></div></div></div><div class='clear'></div>");
+						else {
+							scorestring = "score:" + scorename+ "/" + scores[scoreindex].name; 
+							var scoreresult = calcColor(output[0][scorestring]);
+							res.write("<div class= 'line' ><div class='leaf cell'> " + scores[scoreindex].name + '</div><div class = "tooltip cell ' + scoreresult.Color + '">' + scoreresult.Label + ': ' + output[0][scorestring] + '<span class="tooltiptext">' + scores[scoreindex].description + '</span></div></div><div class="clear"></div>');
 						}
 					}
 					res.write("</div>");
+					if (settings.ActEnabled){
+						res.write("<div class='actpane'>");
+						for (section in actSections){
+							res.write("<div class='cell actSectionHeader'>" + actSections[section].title + "<span class='acttooltip'>" + actSections[section].description + "</span></div><div class='clear'></div>");
+							for (actionIndex in actSections[section].remoteAction){
+								//res.write("<div class='line'><div class='cell'><img src='/images/settings.png' height='20px' width='20px'style='float:left'><div class='acttext'>" + actSections[section].remoteAction[action].name + "<span class='acttooltip'>Sommige problemen verdwijnen als je hier op klikt</span></div></div></div><div class='clear'></div>");
+								res.write("<div class='line'><div class='cell'><img src='/images/settings.png' height='20px' width='20px'style='float:left' onclick=submitActrequest('" + output[0]['device_uid'] + "','" + actSections[section].remoteAction[actionIndex].UID + "')><div class='acttext'>" + actSections[section].remoteAction[actionIndex].name + "</div></div></div><div class='clear'></div>");
+							}
+							for (httpIndex in actSections[section].http){
+								res.write("<div class='line'><div class='cell'><img src='/images/settings.png' height='20px' width='20px'style='float:left'><div class='acttext'><a href='" + actSections[section].http[httpIndex].url + "' target='_blank'>" + actSections[section].http[httpIndex].text + "</a></div></div></div><div class='clear'></div>");
+							}
+						}
+						res.write("</div>");
+					}
+				} catch(e) {
+					//res.write(e.toString());
+					res.write("engine startup is not completed yet</div>");
 				}
+				
 				res.write("</body></html>");
 				res.end();
 			}
@@ -161,8 +168,7 @@ app.get('/device/:deviceId', function(req,res) {
 });
 
 app.get('/reload', function(req,res) {
-	settings = JSON.parse(fs.readFileSync(__dirname + '/settings.json'), {encoding: 'utf-8'});
-	clientList = JSON.parse(fs.readFileSync(__dirname + '/clientList.json'), {encoding: 'utf-8'});
+	reloadStuff();
 	res.write("done");
 	res.end();
 });
@@ -182,6 +188,14 @@ app.get('/act/:deviceId/:actId',function(req,res){
 		res.end();
 	});
 });
+function reloadStuff() {
+	settings = JSON.parse(fs.readFileSync(__dirname + '/settings.json'), {encoding: 'utf-8'});
+	options = settings.engineOptions;
+	clientList = JSON.parse(fs.readFileSync(__dirname + '/clientList.json'), {encoding: 'utf-8'});
+	console.log(`reloaded`);
+}
+
+setInterval(reloadStuff, 300000);
 
 
 function calcColor(score){
