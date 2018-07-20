@@ -41,4 +41,4 @@ function saveClientList(){
 	fs.writeFileSync(filePath,JSON.stringify(clientArray, null,2),{"encoding":"utf-8","flag" : "w"});
 }
 
-setInterval(getClientList, 600000pm2 start refreshClientlist.js);
+setInterval(getClientList, 600000 start refreshClientlist.js);
