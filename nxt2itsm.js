@@ -8,8 +8,8 @@ var libxmljs = require('libxmljs');
 
 var scorename;
 
-var query='query?platform=windows&query=select (' ;
-var selectstring = 'device_uid ';
+var query;
+var selectstring;
 var limits = [];
 var scores = [];
 var actSections = [];
@@ -23,68 +23,7 @@ const httpsoptions = {
 };
 
 var clientList = JSON.parse(fs.readFileSync(__dirname + '/clientList.json'), {encoding: 'utf-8'});
-
-
-fs.readFile(xmlfilePath, {encoding: 'utf-8'}, function(err,data){
-    if (!err) {
-        var xmlDoc = libxmljs.parseXml(data);
-		var firstcompositescore = xmlDoc.get('//CompositeScore');
-		scorename = xmlDoc.get('//ScoreDef').attr('Name').value();
-		var compositescores = firstcompositescore.find('./CompositeScore');
-		for (var compositeindex in compositescores){
-			var score={};
-			Object.assign(score, {"type":"Composite"});
-			Object.assign(score, {'name': compositescores[compositeindex].attr('Name').value()});
-			Object.assign(score, {'description': compositescores[compositeindex].attr('Description').value()});
-			scores.push(score);
-
-			var leafscores = compositescores[compositeindex].find('./LeafScore');
-			for (leafindex in leafscores){
-				var score = {};
-				Object.assign(score, {"type":"Leaf"});
-				Object.assign(score, {'description': leafscores[leafindex].attr('Description').value().replace(/(\r\n|\n|\r)/gm,'<br>')});
-				Object.assign(score, {'name': leafscores[leafindex].attr('Name').value()});
-				scores.push(score);
-				selectstring += '#"score:' + scorename + "/" + leafscores[leafindex].attr('Name').value() + '" '
-			}
-		}
-		var firstCompositescoreActSections = firstcompositescore.find('./Document/Sections/Section');
-		for (section in firstCompositescoreActSections){
-			var actsection = {};
-			actsection.title=firstCompositescoreActSections[section].get('Title').text();
-			actsection.description=firstCompositescoreActSections[section].get('Description').text();
-			var actionsList = [] ;
-			var actionXML = firstCompositescoreActSections[section].find('RemoteAction');
-			 for (remoteAction in actionXML){
-				 var remoteActions = {};
-				 Object.assign(remoteActions, {"name":actionXML[remoteAction].attr('Name').value()});
-				 Object.assign(remoteActions, {"UID":actionXML[remoteAction].attr('UID').value()});
-				 actionsList.push(remoteActions);
-			 }
-			 Object.assign(actsection, {"remoteAction":actionsList});
-			 httpList = [];
-			 var httpXML = firstCompositescoreActSections[section].find('HTTP');
-			 for (httpLinkIndex in httpXML){
-				 var httpLinks = {};
-				 Object.assign(httpLinks, {"text":httpXML[httpLinkIndex].text()});
-				 Object.assign(httpLinks, {"url":httpXML[httpLinkIndex].attr('href').value()});
-				 httpList.push(httpLinks);
-			 }
-			 Object.assign(actsection, {"http":httpList});
-			 actSections.push(actsection);
-		}
-		//console.log(actSections);
-		
-		query += escape(selectstring) + ')(from device (where device (eq name (string "';
-		var thresholds = xmlDoc.get('//Thresholds').find('./Threshold');
-		for (var threshold in thresholds){
-			var keywords = thresholds[threshold].find('./Keyword');
-			for (var keywordindex in keywords ){
-				limits.push([keywords[keywordindex].attr('From').value(),keywords[keywordindex].attr('Label').value(),thresholds[threshold].attr('Color').value()]);
-			}
-		}
-	}
-});
+readxml();
 
 var httpsServer = https.createServer(httpsoptions, app);
 httpsServer.listen(443);
@@ -116,6 +55,7 @@ app.get('/device/:deviceId', function(req,res) {
 				res.write("</head>");
 				res.write("<body>");
 				res.write("<div class='scorepane'>");
+				//console.log(JSON.stringify(body));
 				try {
 					var output = JSON.parse(body);
 					//console.log(JSON.stringify(output, null,2));
@@ -149,12 +89,12 @@ app.get('/device/:deviceId', function(req,res) {
 						}
 						res.write("</div>");
 					}
+				res.write("</body></html>");
 				} catch(e) {
 					//res.write(e.toString());
-					res.write("engine startup is not completed yet</div>");
+					res.write("Invalid Scorefile or engine startup is not completed yet</div>");
+					//break;
 				}
-				
-				res.write("</body></html>");
 				res.end();
 			}
 			else {
@@ -191,22 +131,93 @@ app.get('/act/:deviceId/:actId',function(req,res){
 		res.end();
 	});
 });
-function reloadStuff() {
-	settings = JSON.parse(fs.readFileSync(__dirname + '/settings.json'), {encoding: 'utf-8'});
-	options = settings.engineOptions;
-	clientList = JSON.parse(fs.readFileSync(__dirname + '/clientList.json'), {encoding: 'utf-8'});
-	console.log(`reloaded`);
-}
+
 
 setInterval(reloadStuff, 300000);
 
 
 function calcColor(score){
+	var result = {"Label": "good", "Color": "green"};
 	for(var cnt in limits){
 		if (score <= limits[cnt][0]){
-			var result = {"Label": limits[cnt][1], "Color":limits[cnt][2]};
+			result = {"Label": limits[cnt][1], "Color":limits[cnt][2]};
 			break;
 		}
 	}
 	return result;
+}
+
+function reloadStuff() {
+	settings = JSON.parse(fs.readFileSync(__dirname + '/settings.json'), {encoding: 'utf-8'});
+	options = settings.engineOptions;
+	clientList = JSON.parse(fs.readFileSync(__dirname + '/clientList.json'), {encoding: 'utf-8'});
+	readxml();
+	console.log(`reloaded`);
+}
+function readxml(){
+	limits = [];
+	scores = [];
+	actSections = [];
+	query = 'query?platform=windows&query=select (' ;
+	selectstring = 'device_uid ';
+	fs.readFile(xmlfilePath, {encoding: 'utf-8'}, function(err,data){
+		if (!err) {
+			var xmlDoc = libxmljs.parseXml(data);
+			var firstcompositescore = xmlDoc.get('//CompositeScore');
+			scorename = xmlDoc.get('//ScoreDef').attr('Name').value();
+			var compositescores = firstcompositescore.find('./CompositeScore');
+			for (var compositeindex in compositescores){
+				var score={};
+				Object.assign(score, {"type":"Composite"});
+				Object.assign(score, {'name': compositescores[compositeindex].attr('Name').value()});
+				Object.assign(score, {'description': compositescores[compositeindex].attr('Description').value()});
+				scores.push(score);
+
+				var leafscores = compositescores[compositeindex].find('./LeafScore');
+				for (leafindex in leafscores){
+					var score = {};
+					Object.assign(score, {"type":"Leaf"});
+					Object.assign(score, {'description': leafscores[leafindex].attr('Description').value().replace(/(\r\n|\n|\r)/gm,'<br>')});
+					Object.assign(score, {'name': leafscores[leafindex].attr('Name').value()});
+					scores.push(score);
+					selectstring += '#"score:' + scorename + "/" + leafscores[leafindex].attr('Name').value() + '" '
+				}
+			}
+			var firstCompositescoreActSections = firstcompositescore.find('./Document/Sections/Section');
+			for (section in firstCompositescoreActSections){
+				var actsection = {};
+				actsection.title=firstCompositescoreActSections[section].get('Title').text();
+				actsection.description=firstCompositescoreActSections[section].get('Description').text();
+				var actionsList = [] ;
+				var actionXML = firstCompositescoreActSections[section].find('RemoteAction');
+				 for (remoteAction in actionXML){
+					 var remoteActions = {};
+					 Object.assign(remoteActions, {"name":actionXML[remoteAction].attr('Name').value()});
+					 Object.assign(remoteActions, {"UID":actionXML[remoteAction].attr('UID').value()});
+					 actionsList.push(remoteActions);
+				 }
+				 Object.assign(actsection, {"remoteAction":actionsList});
+				 httpList = [];
+				 var httpXML = firstCompositescoreActSections[section].find('HTTP');
+				 for (httpLinkIndex in httpXML){
+					 var httpLinks = {};
+					 Object.assign(httpLinks, {"text":httpXML[httpLinkIndex].text()});
+					 Object.assign(httpLinks, {"url":httpXML[httpLinkIndex].attr('href').value()});
+					 httpList.push(httpLinks);
+				 }
+				 Object.assign(actsection, {"http":httpList});
+				 actSections.push(actsection);
+			}
+			//console.log(actSections);
+			//console.log(selectstring);
+			query += escape(selectstring) + ')(from device (where device (eq name (string "';
+			var thresholds = xmlDoc.get('//Thresholds').find('./Threshold');
+			for (var threshold in thresholds){
+				var keywords = thresholds[threshold].find('./Keyword');
+				for (var keywordindex in keywords ){
+					limits.push([keywords[keywordindex].attr('From').value(),keywords[keywordindex].attr('Label').value(),thresholds[threshold].attr('Color').value()]);
+				}
+			}
+		}
+	});
 }
