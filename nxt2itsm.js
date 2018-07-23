@@ -45,7 +45,6 @@ fs.readFile(xmlfilePath, {encoding: 'utf-8'}, function(err,data){
 				Object.assign(score, {'description': leafscores[leafindex].attr('Description').value().replace(/(\r\n|\n|\r)/gm,'<br>')});
 				Object.assign(score, {'name': leafscores[leafindex].attr('Name').value()});
 				scores.push(score);
-				// next line on purpose not good
 				selectstring += '#"score:' + scorename + "/" + leafscores[leafindex].attr('Name').value() + '" '
 			}
 		}
@@ -127,8 +126,13 @@ app.get('/device/:deviceId', function(req,res) {
 						}
 						else {
 							scorestring = "score:" + scorename+ "/" + scores[scoreindex].name; 
-							var scoreresult = calcColor(output[0][scorestring]);
-							res.write("<div class= 'line' ><div class='leaf cell'> " + scores[scoreindex].name + '</div><div class = "tooltip cell ' + scoreresult.Color + '">' + scoreresult.Label + ': ' + output[0][scorestring] + '<span class="tooltiptext">' + scores[scoreindex].description + '</span></div></div><div class="clear"></div>');
+							if (typeof output[0][scorestring] == 'number'){
+								var scoreresult = calcColor(output[0][scorestring]);
+								res.write("<div class= 'line' ><div class='leaf cell'> " + scores[scoreindex].name + '</div><div class = "tooltip cell ' + scoreresult.Color + '">' + scoreresult.Label + ': ' + output[0][scorestring] + '<span class="tooltiptext">' + scores[scoreindex].description + '</span></div></div><div class="clear"></div>');
+							}
+							else {
+								res.write("<div class= 'line' ><div class='leaf cell'> " + scores[scoreindex].name + '</div><div class = "tooltip cell green">-<span class="tooltiptext">' + scores[scoreindex].description + '</span></div></div><div class="clear"></div>');
+							}
 						}
 					}
 					res.write("</div>");
@@ -137,7 +141,6 @@ app.get('/device/:deviceId', function(req,res) {
 						for (section in actSections){
 							res.write("<div class='cell actSectionHeader'>" + actSections[section].title + "<span class='acttooltip'>" + actSections[section].description + "</span></div><div class='clear'></div>");
 							for (actionIndex in actSections[section].remoteAction){
-								//res.write("<div class='line'><div class='cell'><img src='/images/settings.png' height='20px' width='20px'style='float:left'><div class='acttext'>" + actSections[section].remoteAction[action].name + "<span class='acttooltip'>Sommige problemen verdwijnen als je hier op klikt</span></div></div></div><div class='clear'></div>");
 								res.write("<div class='line'><div class='cell'><img src='/images/settings.png' height='20px' width='20px'style='float:left' onclick=submitActrequest('" + output[0]['device_uid'] + "','" + actSections[section].remoteAction[actionIndex].UID + "')><div class='acttext'>" + actSections[section].remoteAction[actionIndex].name + "</div></div></div><div class='clear'></div>");
 							}
 							for (httpIndex in actSections[section].http){
@@ -199,7 +202,6 @@ setInterval(reloadStuff, 300000);
 
 
 function calcColor(score){
-	var result = {"Label": "onbekend", "Color": "green"};
 	for(var cnt in limits){
 		if (score <= limits[cnt][0]){
 			var result = {"Label": limits[cnt][1], "Color":limits[cnt][2]};
