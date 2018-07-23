@@ -7,7 +7,7 @@ var path = require('path');
 var libxmljs = require('libxmljs');
 
 var scorename;
-var xmlfilePath = __dirname + '/L1 Checklist3.xml';
+
 var query='query?platform=windows&query=select (' ;
 var selectstring = 'device_uid ';
 var limits = [];
@@ -15,7 +15,7 @@ var scores = [];
 var actSections = [];
 var settings = JSON.parse(fs.readFileSync(__dirname + '/settings.json'), {encoding: 'utf-8'});
 var options = settings.engineOptions;
-
+var xmlfilePath = __dirname + '/' + settings.scoreFile;
 
 const httpsoptions = {
   key: fs.readFileSync(__dirname + '/keys/ca.key', 'utf8'),
